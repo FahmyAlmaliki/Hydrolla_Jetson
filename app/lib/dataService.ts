@@ -122,21 +122,22 @@ async function fetchSensorReadingsFromInflux(): Promise<SensorReading[]> {
  * Ambil data historis 24 jam untuk line chart.
  * Menggunakan aggregateWindow 1 jam (mean).
  */
-async function fetchChartDataFromInflux(): Promise<ChartPoint[]> {
+async function fetchChartDataFromInflux(range: ChartRange): Promise<ChartPoint[]> {
+  const config = getChartQueryConfig(range);
   const flux = `
     from(bucket: "${INFLUX_BUCKET}")
-      |> range(start: -24h)
+      |> range(start: ${config.start})
       |> filter(fn: (r) => r._measurement == "water_quality")
       |> filter(fn: (r) => r._field == "ph" or r._field == "do" or
                            r._field == "temperature" or r._field == "nh3")
-      |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)
+      |> aggregateWindow(every: ${config.window}, fn: mean, createEmpty: false)
       |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
       |> sort(columns: ["_time"])
   `;
 
   try {
     const rows = await runQuery(flux);
-    if (rows.length === 0) return mockChartData;
+    if (rows.length === 0) return mockChartData.slice(-config.mockCount);
 
     return rows.map((row) => {
       const t = new Date(row._time as string);
@@ -152,7 +153,7 @@ async function fetchChartDataFromInflux(): Promise<ChartPoint[]> {
     });
   } catch (err) {
     console.error("[HYDROLA] InfluxDB chart query failed, falling back to mock:", err);
-    return mockChartData;
+    return mockChartData.slice(-config.mockCount);
   }
 }
 
@@ -226,13 +227,29 @@ export interface DashboardData {
   dataSource: "influxdb" | "mock";
 }
 
+export type ChartRange = "6h" | "24h" | "7d" | "30d";
+
+function getChartQueryConfig(range: ChartRange) {
+  switch (range) {
+    case "6h":
+      return { start: "-6h", window: "15m", mockCount: 25 };
+    case "7d":
+      return { start: "-7d", window: "6h", mockCount: 29 };
+    case "30d":
+      return { start: "-30d", window: "1d", mockCount: 31 };
+    case "24h":
+    default:
+      return { start: "-24h", window: "1h", mockCount: 25 };
+  }
+}
+
 /**
  * Satu fungsi untuk ambil semua data dashboard.
  * - Jika InfluxDB belum dikonfigurasi → pakai mock data sepenuhnya.
  * - Jika NEXT_PUBLIC_FORCE_MOCK=true → pakai mock data sepenuhnya.
  * - Jika InfluxDB tersedia → fetch semua dari InfluxDB, fallback per-field ke mock.
  */
-export async function getDashboardData(): Promise<DashboardData> {
+export async function getDashboardData(chartRange: ChartRange = "24h"): Promise<DashboardData> {
   const forceMock = process.env.NEXT_PUBLIC_FORCE_MOCK === "true";
   const useInflux = isInfluxConfigured() && !forceMock;
 
@@ -249,7 +266,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   // Fetch semua secara paralel untuk efisiensi
   const [sensors, chart, alerts] = await Promise.all([
     fetchSensorReadingsFromInflux(),
-    fetchChartDataFromInflux(),
+    fetchChartDataFromInflux(chartRange),
     fetchAlertsFromInflux(),
   ]);
 

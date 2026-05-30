@@ -13,6 +13,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { ChartPoint } from "@/app/lib/mockData";
+import type { ChartRange } from "@/app/lib/dataService";
 
 type Filter = "Semua" | "pH" | "DO" | "Suhu" | "NH3";
 
@@ -47,12 +48,26 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-export default function WaterChart({ data }: { data: ChartPoint[] }) {
+export default function WaterChart({
+  data,
+  range,
+  onRangeChange,
+}: {
+  data: ChartPoint[];
+  range: ChartRange;
+  onRangeChange: (range: ChartRange) => void;
+}) {
   const [filter, setFilter] = useState<Filter>("Semua");
   const transformed = data.map(transformPoint);
 
   const filters: Filter[] = ["Semua", "pH", "DO", "Suhu", "NH3"];
   const show = (key: Filter) => filter === "Semua" || filter === key;
+  const rangeOptions: Array<{ value: ChartRange; label: string }> = [
+    { value: "6h", label: "6 Jam" },
+    { value: "24h", label: "24 Jam" },
+    { value: "7d", label: "7 Hari" },
+    { value: "30d", label: "30 Hari" },
+  ];
 
   return (
     <section className="bg-[var(--color-surface-container-lowest)] rounded-2xl border border-[var(--color-outline-variant)]/40 p-6 animate-slide-up animation-delay-300">
@@ -62,7 +77,24 @@ export default function WaterChart({ data }: { data: ChartPoint[] }) {
           <h3 className="text-base font-semibold text-[var(--color-on-surface)]">
             Fluktuasi Parameter Air
           </h3>
-          <p className="text-xs text-[var(--color-outline)] mt-0.5">24 Jam Terakhir</p>
+          <p className="text-xs text-[var(--color-outline)] mt-0.5">Rentang aktif: {range}</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-[var(--color-surface-container)]">
+          {rangeOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => onRangeChange(option.value)}
+              className={[
+                "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200",
+                range === option.value
+                  ? "bg-[var(--color-primary)] text-white shadow-sm"
+                  : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)]",
+              ].join(" ")}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
 
         <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--color-surface-container)]">
@@ -85,9 +117,6 @@ export default function WaterChart({ data }: { data: ChartPoint[] }) {
 
       {/* Chart */}
       <div className="w-full h-72 min-w-0">
-        {data.length < 2 && (
-          <div className="absolute hidden" />
-        )}
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={transformed} margin={{ top: 4, right: 16, bottom: 0, left: -8 }}>
             <defs>

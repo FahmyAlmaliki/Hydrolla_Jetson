@@ -5,14 +5,16 @@ import MetricCard from "@/app/components/MetricCard";
 import WaterChart from "@/app/components/WaterChart";
 import AIPredictionWidget from "@/app/components/AIPredictionWidget";
 import AlertTable from "@/app/components/AlertTable";
-import type { DashboardData } from "@/app/lib/dataService";
+import type { ChartRange, DashboardData } from "@/app/lib/dataService";
 
 const REFRESH_MS = 10_000;
+const DEFAULT_RANGE: ChartRange = "24h";
 
 export default function DashboardAutoRefresh({ initialData }: { initialData: DashboardData }) {
   const [data, setData] = useState(initialData);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>(new Date().toISOString());
+  const [chartRange, setChartRange] = useState<ChartRange>(DEFAULT_RANGE);
 
   useEffect(() => {
     let cancelled = false;
@@ -20,7 +22,7 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
     async function refresh() {
       try {
         setRefreshing(true);
-        const response = await fetch("/api/dashboard", { cache: "no-store" });
+        const response = await fetch(`/api/dashboard?range=${chartRange}`, { cache: "no-store" });
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -44,7 +46,11 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [chartRange]);
+
+  function handleRangeChange(nextRange: ChartRange) {
+    setChartRange(nextRange);
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -105,7 +111,7 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
         </div>
       </section>
 
-      <WaterChart data={data.chart} />
+      <WaterChart data={data.chart} range={chartRange} onRangeChange={handleRangeChange} />
 
       <section aria-label="Prediksi AI dan Peringatan" className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div className="lg:col-span-2">
