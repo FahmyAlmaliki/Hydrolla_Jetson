@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+/* ─── HYDROLA Design Tokens ────────────────────────────────────── */
+@theme inline {
+  /* Brand colors */
+  --color-primary:        #006591;
+  --color-primary-light:  #0ea5e9;
+  --color-primary-dim:    #89ceff;
+  --color-primary-muted:  #c9e6ff;
+
+  --color-secondary:      #006c49;
+  --color-secondary-container: #6cf8bb;
+  --color-on-secondary-container: #00714d;
+
+  --color-tertiary:       #855300;
+  --color-tertiary-container: #d88a00;
+  --color-on-tertiary-container: #4a2c00;
+
+  --color-error:          #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* Surface scale */
+  --color-surface:              #f7f9fb;
+  --color-surface-bright:       #f7f9fb;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2f4f6;
+  --color-surface-container:    #eceef0;
+  --color-surface-container-high: #e6e8ea;
+  --color-surface-container-highest: #e0e3e5;
+  --color-surface-dim:          #d8dadc;
+  --color-surface-variant:      #e0e3e5;
+
+  /* On-colors */
+  --color-on-surface:           #191c1e;
+  --color-on-surface-variant:   #3e4850;
+  --color-outline:              #6e7881;
+  --color-outline-variant:      #bec8d2;
+
+  /* Fonts */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ─── Base Styles ────────────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--color-surface-container); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-outline-variant);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-outline); }
+}
+
+/* ─── Custom Animations ───────────────────────────────────────────── */
+@layer utilities {
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(1.4); }
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0, 101, 145, 0.15); }
+    50%       { box-shadow: 0 0 0 8px rgba(0, 101, 145, 0); }
+  }
+
+  .animate-pulse-dot   { animation: pulse-dot 2s ease-in-out infinite; }
+  .animate-slide-up    { animation: slide-up 0.4s ease-out both; }
+  .animate-fade-in     { animation: fade-in 0.3s ease-out both; }
+  .animate-glow-pulse  { animation: glow-pulse 2.5s ease-in-out infinite; }
+
+  .animation-delay-100 { animation-delay: 0.1s; }
+  .animation-delay-200 { animation-delay: 0.2s; }
+  .animation-delay-300 { animation-delay: 0.3s; }
+  .animation-delay-400 { animation-delay: 0.4s; }
+
+  /* Glassmorphism card */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(190, 200, 210, 0.5);
+  }
+}
