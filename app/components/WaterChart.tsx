@@ -85,6 +85,9 @@ export default function WaterChart({ data }: { data: ChartPoint[] }) {
 
       {/* Chart */}
       <div className="w-full h-72 min-w-0">
+        {data.length < 2 && (
+          <div className="absolute hidden" />
+        )}
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={transformed} margin={{ top: 4, right: 16, bottom: 0, left: -8 }}>
             <defs>
@@ -151,6 +154,12 @@ export default function WaterChart({ data }: { data: ChartPoint[] }) {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {data.length < 2 && (
+        <p className="mt-3 text-xs text-[var(--color-outline)]">
+          Grafik masih punya {data.length} sampel. Line chart baru akan terbentuk saat ada minimal 2 data historis.
+        </p>
+      )}
     </section>
   );
 }
