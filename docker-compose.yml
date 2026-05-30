@@ -25,7 +25,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3030:3030"
     env_file:
       - .env.example
     environment:
