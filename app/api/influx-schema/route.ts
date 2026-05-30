@@ -3,6 +3,50 @@ import { getInfluxQueryApi, INFLUX_BUCKET, isInfluxConfigured } from "@/app/lib/
 
 export const dynamic = "force-dynamic";
 
+const STATIC_SCHEMA = {
+  status: "disconnected" as const,
+  source: "static" as const,
+  bucket: INFLUX_BUCKET,
+  org: process.env.INFLUXDB_ORG ?? "hydrola",
+  url: null as string | null,
+  measurements: [
+    {
+      name: "water_quality",
+      fields: [
+        { name: "ph", type: "float", description: "Tingkat keasaman air" },
+        { name: "do", type: "float", description: "Dissolved Oxygen (mg/L)" },
+        { name: "temperature", type: "float", description: "Suhu air (°C)" },
+        { name: "nh3", type: "float", description: "Amonia bebas (mg/L)" },
+      ],
+      tags: [
+        { name: "sensor_id", description: "Identifikasi sensor" },
+        { name: "location", description: "Lokasi kolam" },
+      ],
+      retentionPolicy: "30 hari",
+      writeFrequency: "Setiap pembacaan sensor",
+    },
+    {
+      name: "alerts",
+      fields: [
+        { name: "parameter", type: "string", description: "Nama parameter yang memicu alert" },
+        { name: "value", type: "float", description: "Nilai saat alert terjadi" },
+        { name: "status", type: "string", description: "KRITIS / WASPADA" },
+      ],
+      tags: [{ name: "source", description: "Sumber notifikasi (telegram / web)" }],
+      retentionPolicy: "30 hari",
+      writeFrequency: "Saat threshold terlampaui",
+    },
+  ],
+};
+
+function buildStaticSchema(message?: string) {
+  return {
+    ...STATIC_SCHEMA,
+    message,
+    queriedAt: new Date().toISOString(),
+  };
+}
+
 // ─────────────────────────────────────────────
 //  Helper: run a Flux query and collect rows
 // ─────────────────────────────────────────────
@@ -31,45 +75,7 @@ export async function GET() {
   const configured = isInfluxConfigured();
 
   if (!configured) {
-    // Return the static schema from dataService comments (mock)
-    return NextResponse.json({
-      status: "disconnected",
-      source: "static",
-      bucket: INFLUX_BUCKET,
-      org: process.env.INFLUXDB_ORG ?? "hydrola",
-      url: null,
-      measurements: [
-        {
-          name: "water_quality",
-          fields: [
-            { name: "ph",          type: "float", description: "Tingkat keasaman air" },
-            { name: "do",          type: "float", description: "Dissolved Oxygen (mg/L)" },
-            { name: "temperature", type: "float", description: "Suhu air (°C)" },
-            { name: "nh3",         type: "float", description: "Amonia bebas (mg/L)" },
-          ],
-          tags: [
-            { name: "sensor_id", description: "Identifikasi sensor" },
-            { name: "location",  description: "Lokasi kolam" },
-          ],
-          retentionPolicy: "30 hari",
-          writeFrequency: "Setiap pembacaan sensor",
-        },
-        {
-          name: "alerts",
-          fields: [
-            { name: "parameter", type: "string", description: "Nama parameter yang memicu alert" },
-            { name: "value",     type: "float",  description: "Nilai saat alert terjadi" },
-            { name: "status",    type: "string", description: "KRITIS / WASPADA" },
-          ],
-          tags: [
-            { name: "source", description: "Sumber notifikasi (telegram / web)" },
-          ],
-          retentionPolicy: "30 hari",
-          writeFrequency: "Saat threshold terlampaui",
-        },
-      ],
-      queriedAt: new Date().toISOString(),
-    });
+    return NextResponse.json(buildStaticSchema());
   }
 
   // ── Connected: query real schema from InfluxDB ──────────────────
@@ -140,9 +146,6 @@ export async function GET() {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json(
-      { status: "error", message, source: "live" },
-      { status: 502 }
-    );
+    return NextResponse.json(buildStaticSchema(message));
   }
 }

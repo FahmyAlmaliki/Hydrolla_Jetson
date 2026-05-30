@@ -33,6 +33,19 @@ interface SchemaResponse {
   message?: string;
 }
 
+function normalizeSchemaResponse(data: Partial<SchemaResponse>): SchemaResponse {
+  return {
+    status: data.status === "connected" || data.status === "error" ? data.status : "disconnected",
+    source: data.source === "live" ? "live" : "static",
+    bucket: data.bucket ?? "water_quality",
+    org: data.org ?? "hydrola",
+    url: data.url ?? null,
+    measurements: Array.isArray(data.measurements) ? data.measurements : [],
+    queriedAt: data.queriedAt ?? new Date().toISOString(),
+    message: data.message,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────
 //  Sub-components
 // ─────────────────────────────────────────────────────────────────
@@ -100,9 +113,10 @@ export default function InfluxSchemaPanel() {
     fetch("/api/influx-schema")
       .then((r) => r.json())
       .then((data: SchemaResponse) => {
-        setSchema(data);
+        const normalized = normalizeSchemaResponse(data);
+        setSchema(normalized);
         // auto-expand all measurements
-        setExpanded(new Set((data.measurements ?? []).map((m) => m.name)));
+        setExpanded(new Set(normalized.measurements.map((m) => m.name)));
       })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
