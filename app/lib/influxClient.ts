@@ -75,7 +75,7 @@ export function getInfluxWriteApi(): WriteApi | null {
       flushInterval: 5000,
       // Retry 3x jika gagal
       maxRetries:    3,
-      retryDelay:    1000,
+      minretryDelay:    1000,
       // Callback jika ada error saat flush background
       writeFailed(error, lines) {
         console.error("[InfluxDB WriteApi] Gagal menulis:", error.message);
