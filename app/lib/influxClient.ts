@@ -6,6 +6,15 @@ import { InfluxDB, QueryApi } from "@influxdata/influxdb-client";
  */
 let _queryApi: QueryApi | null = null;
 
+export function normalizeInfluxUrl(value: string): string {
+  const trimmed = value.trim().replace(/\/+$/, "");
+  if (!trimmed) return trimmed;
+  if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed)) {
+    return trimmed;
+  }
+  return `http://${trimmed}`;
+}
+
 export function getInfluxQueryApi(): QueryApi | null {
   const url    = process.env.INFLUXDB_URL;
   const token  = process.env.INFLUXDB_TOKEN;
@@ -13,7 +22,7 @@ export function getInfluxQueryApi(): QueryApi | null {
   if (!url || !token) return null;
 
   if (!_queryApi) {
-    const client = new InfluxDB({ url, token });
+    const client = new InfluxDB({ url: normalizeInfluxUrl(url), token });
     _queryApi = client.getQueryApi(process.env.INFLUXDB_ORG ?? "hydrola");
   }
 

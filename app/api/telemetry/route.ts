@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { InfluxDB, Point } from "@influxdata/influxdb-client";
+import { normalizeInfluxUrl } from "@/app/lib/influxClient";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
     const org = process.env.INFLUXDB_ORG ?? "hydrola";
     const bucket = process.env.INFLUXDB_BUCKET ?? "water_quality";
     const client = new InfluxDB({
-      url: process.env.INFLUXDB_URL,
+      url: normalizeInfluxUrl(process.env.INFLUXDB_URL),
       token: process.env.INFLUXDB_TOKEN,
     });
     const writeApi = client.getWriteApi(org, bucket);
