@@ -10,9 +10,25 @@ export function normalizeInfluxUrl(value: string): string {
   const trimmed = value.trim().replace(/\/+$/, "");
   if (!trimmed) return trimmed;
   if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed)) {
-    return trimmed;
+    try {
+      const parsed = new URL(trimmed);
+      if (!parsed.port) {
+        parsed.port = "8086";
+      }
+      return parsed.toString().replace(/\/+$/, "");
+    } catch {
+      return trimmed;
+    }
   }
-  return `http://${trimmed}`;
+  try {
+    const parsed = new URL(`http://${trimmed}`);
+    if (!parsed.port) {
+      parsed.port = "8086";
+    }
+    return parsed.toString().replace(/\/+$/, "");
+  } catch {
+    return `http://${trimmed}:8086`;
+  }
 }
 
 export function getInfluxQueryApi(): QueryApi | null {
