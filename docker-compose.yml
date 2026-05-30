@@ -1,4 +1,25 @@
+version: '3'
+
 services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: admin12345
+      DOCKER_INFLUXDB_INIT_ORG: flagship
+      DOCKER_INFLUXDB_INIT_BUCKET: sensor
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: mytoken123
+
+    restart: unless-stopped
+
   web:
     build:
       context: .
@@ -11,3 +32,20 @@ services:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
     restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+    depends_on:
+      - influxdb
+
+    restart: unless-stopped
+volumes:
+  influxdb-data:
+  grafana-data:
