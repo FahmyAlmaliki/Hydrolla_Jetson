@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { InfluxDB, Point, WritePrecision } from "@influxdata/influxdb-client";
+import { InfluxDB, Point } from "@influxdata/influxdb-client";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       url: process.env.INFLUXDB_URL,
       token: process.env.INFLUXDB_TOKEN,
     });
-    const writeApi = client.getWriteApi(org, bucket, WritePrecision.ms);
+    const writeApi = client.getWriteApi(org, bucket);
 
     const point = new Point("water_quality")
       .tag("sensor_id", sensorId)
