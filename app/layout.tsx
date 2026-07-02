@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/app/components/Sidebar";
-import TopBar  from "@/app/components/TopBar";
+import AppShell from "@/app/components/AppShell";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,21 +25,7 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${inter.variable} h-full`}>
       <body className="min-h-full" style={{ background: "var(--color-surface)" }}>
-        {/* Sidebar */}
-        <Sidebar />
-
-        {/* Content shell: offset by sidebar width */}
-        <div className="ml-[272px] flex flex-col min-h-screen">
-          {/* Topbar */}
-          <TopBar />
-
-          {/* Page content: offset by topbar height */}
-          <main className="flex-1 pt-16">
-            <div className="max-w-[1280px] mx-auto px-6 py-8">
-              {children}
-            </div>
-          </main>
-        </div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

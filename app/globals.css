@@ -112,3 +112,22 @@
     border: 1px solid rgba(190, 200, 210, 0.5);
   }
 }
+
+/* ─── Responsive Breakpoint: xs (480px) ──────────────────────────── */
+@layer utilities {
+  @media (min-width: 480px) {
+    .xs\:inline      { display: inline; }
+    .xs\:hidden      { display: none; }
+    .xs\:flex        { display: flex; }
+    .xs\:flex-row    { flex-direction: row; }
+    .xs\:block       { display: block; }
+  }
+}
+
+/* ─── Sidebar Mobile Transition ──────────────────────────────────── */
+@layer utilities {
+  /* Ensure sidebar transition works on mobile */
+  .sidebar-transition {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}

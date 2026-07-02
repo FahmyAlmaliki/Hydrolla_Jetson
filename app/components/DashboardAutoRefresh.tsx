@@ -53,8 +53,8 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="animate-fade-in flex items-start justify-between gap-4 flex-wrap">
+    <div className="flex flex-col gap-6 sm:gap-8">
+      <div className="animate-fade-in flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-[var(--color-on-surface)] leading-tight">
             Dashboard Real-Time
@@ -64,7 +64,7 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className="flex items-center gap-2 flex-wrap">
           <span
             title={
               data.dataSource === "influxdb"
@@ -72,7 +72,7 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
                 : "Mode demo — InfluxDB belum dikonfigurasi"
             }
             className={[
-              "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold self-start",
+              "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold",
               data.dataSource === "influxdb"
                 ? "bg-[var(--color-secondary)]/10 text-[var(--color-on-secondary-container)]"
                 : "bg-[var(--color-surface-container-high)] text-[var(--color-outline)]",
@@ -80,24 +80,24 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
           >
             <span
               className={[
-                "w-1.5 h-1.5 rounded-full",
+                "w-1.5 h-1.5 rounded-full shrink-0",
                 data.dataSource === "influxdb"
                   ? "bg-[var(--color-secondary)] animate-pulse-dot"
                   : "bg-[var(--color-outline)]",
               ].join(" ")}
             />
-            {data.dataSource === "influxdb" ? "Live · InfluxDB" : "Demo · Mock Data"}
+            {data.dataSource === "influxdb" ? "Live · InfluxDB" : "Demo · Mock"}
           </span>
 
           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--color-surface-container-high)] text-[var(--color-on-surface-variant)]">
             <span className={[
-              "w-1.5 h-1.5 rounded-full",
+              "w-1.5 h-1.5 rounded-full shrink-0",
               refreshing ? "bg-[var(--color-secondary)] animate-pulse-dot" : "bg-[var(--color-outline)]",
             ].join(" ")} />
-            {refreshing ? "Menyegarkan..." : "Auto refresh aktif"}
+            {refreshing ? "Refresh..." : "Auto refresh"}
           </span>
 
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--color-surface-container-high)] text-[var(--color-on-surface-variant)]">
+          <span className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--color-surface-container-high)] text-[var(--color-on-surface-variant)]">
             Update: {new Date(lastUpdated).toLocaleTimeString("id-ID")}
           </span>
         </div>

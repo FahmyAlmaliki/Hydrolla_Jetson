@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 const navItems = [
   {
@@ -43,74 +44,127 @@ const navItems = [
   },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
 
+  // Close sidebar when route changes (mobile)
+  useEffect(() => {
+    onClose();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
+
   return (
-    <nav className="w-[272px] h-screen fixed left-0 top-0 z-50 flex flex-col border-r border-[var(--color-outline-variant)]"
-      style={{ background: "var(--color-surface-container-lowest)" }}>
+    <>
+      {/* ── Mobile Backdrop ── */}
+      <div
+        className={[
+          "fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden",
+          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+        ].join(" ")}
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
-      {/* Brand */}
-      <div className="px-6 py-6 border-b border-[var(--color-outline-variant)]">
-        <div className="flex items-center gap-3">
-          {/* Logo mark */}
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: "var(--color-primary)" }}>
-            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-              <path d="M12 3C8 3 5 7 5 11c0 4.5 3.5 7 7 8.5C19 18 19 14.5 19 11c0-4-3-8-7-8Z"
-                fill="white" opacity="0.9" />
-              <path d="M9 14c0 1.7 1.3 3 3 3s3-1.3 3-3-1.3-3-3-3-3 1.3-3 3Z"
-                fill="white" opacity="0.6" />
+      {/* ── Sidebar Panel ── */}
+      <nav
+        className={[
+          "fixed left-0 top-0 z-50 h-screen w-[272px] flex flex-col",
+          "border-r border-[var(--color-outline-variant)]",
+          "transition-transform duration-300 ease-in-out",
+          // Desktop: always visible; Mobile: slide in/out
+          "lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        ].join(" ")}
+        style={{ background: "var(--color-surface-container-lowest)" }}
+      >
+        {/* Brand */}
+        <div className="px-6 py-6 border-b border-[var(--color-outline-variant)] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Logo mark */}
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: "var(--color-primary)" }}>
+              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+                <path d="M12 3C8 3 5 7 5 11c0 4.5 3.5 7 7 8.5C19 18 19 14.5 19 11c0-4-3-8-7-8Z"
+                  fill="white" opacity="0.9" />
+                <path d="M9 14c0 1.7 1.3 3 3 3s3-1.3 3-3-1.3-3-3-3-3 1.3-3 3Z"
+                  fill="white" opacity="0.6" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight" style={{ color: "var(--color-primary)" }}>
+                HYDROLA
+              </h1>
+              <p className="text-xs" style={{ color: "var(--color-on-surface-variant)" }}>
+                Aquaponics IoT
+              </p>
+            </div>
+          </div>
+
+          {/* Close button — mobile only */}
+          <button
+            onClick={onClose}
+            className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-outline)] hover:bg-[var(--color-surface-container)] hover:text-[var(--color-on-surface)] transition-all duration-200"
+            aria-label="Tutup menu"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path fillRule="evenodd" d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
             </svg>
-          </div>
-          <div>
-            <h1 className="text-lg font-bold tracking-tight" style={{ color: "var(--color-primary)" }}>
-              HYDROLA
-            </h1>
-            <p className="text-xs" style={{ color: "var(--color-on-surface-variant)" }}>
-              Aquaponics IoT
-            </p>
-          </div>
+          </button>
         </div>
-      </div>
 
-      {/* Navigation */}
-      <ul className="flex flex-col gap-1 px-3 py-4 flex-grow">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className={[
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                  isActive
-                    ? "text-[var(--color-primary)] bg-[var(--color-primary)]/10 font-semibold"
-                    : "text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container)] hover:text-[var(--color-on-surface)]",
-                ].join(" ")}
-              >
-                <span className={isActive ? "text-[var(--color-primary)]" : ""}>
-                  {item.icon}
-                </span>
-                {item.label}
-                {isActive && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]" />
-                )}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+        {/* Navigation */}
+        <ul className="flex flex-col gap-1 px-3 py-4 flex-grow overflow-y-auto">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={[
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+                    isActive
+                      ? "text-[var(--color-primary)] bg-[var(--color-primary)]/10 font-semibold"
+                      : "text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container)] hover:text-[var(--color-on-surface)]",
+                  ].join(" ")}
+                >
+                  <span className={isActive ? "text-[var(--color-primary)]" : ""}>
+                    {item.icon}
+                  </span>
+                  {item.label}
+                  {isActive && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]" />
+                  )}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
 
-      {/* Footer info */}
-      <div className="px-5 py-4 border-t border-[var(--color-outline-variant)]">
-        <p className="text-xs" style={{ color: "var(--color-outline)" }}>
-          RnD IoT HME FT UB
-        </p>
-        <p className="text-xs mt-0.5" style={{ color: "var(--color-outline)" }}>
-          v0.1.0 · Fase Perancangan
-        </p>
-      </div>
-    </nav>
+        {/* Footer info */}
+        <div className="px-5 py-4 border-t border-[var(--color-outline-variant)]">
+          <p className="text-xs" style={{ color: "var(--color-outline)" }}>
+            RnD IoT HME FT UB
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--color-outline)" }}>
+            v0.1.0 · Fase Perancangan
+          </p>
+        </div>
+      </nav>
+    </>
   );
 }

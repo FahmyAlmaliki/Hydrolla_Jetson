@@ -70,53 +70,56 @@ export default function WaterChart({
   ];
 
   return (
-    <section className="bg-[var(--color-surface-container-lowest)] rounded-2xl border border-[var(--color-outline-variant)]/40 p-6 animate-slide-up animation-delay-300">
+    <section className="bg-[var(--color-surface-container-lowest)] rounded-2xl border border-[var(--color-outline-variant)]/40 p-4 sm:p-6 animate-slide-up animation-delay-300">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+        <div className="shrink-0">
           <h3 className="text-base font-semibold text-[var(--color-on-surface)]">
             Fluktuasi Parameter Air
           </h3>
           <p className="text-xs text-[var(--color-outline)] mt-0.5">Rentang aktif: {range}</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-[var(--color-surface-container)]">
-          {rangeOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => onRangeChange(option.value)}
-              className={[
-                "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200",
-                range === option.value
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)]",
-              ].join(" ")}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        {/* Filter controls — scrollable on small screens */}
+        <div className="flex flex-col xs:flex-row gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--color-surface-container)] shrink-0">
+            {rangeOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => onRangeChange(option.value)}
+                className={[
+                  "px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap",
+                  range === option.value
+                    ? "bg-[var(--color-primary)] text-white shadow-sm"
+                    : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)]",
+                ].join(" ")}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
 
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--color-surface-container)]">
-          {filters.map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={[
-                "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200",
-                filter === f
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)]",
-              ].join(" ")}
-            >
-              {f}
-            </button>
-          ))}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--color-surface-container)] shrink-0">
+            {filters.map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={[
+                  "px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap",
+                  filter === f
+                    ? "bg-[var(--color-primary)] text-white shadow-sm"
+                    : "text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)]",
+                ].join(" ")}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Chart */}
-      <div className="w-full h-72 min-w-0">
+      <div className="w-full h-56 sm:h-72 min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={transformed} margin={{ top: 4, right: 16, bottom: 0, left: -8 }}>
             <defs>
