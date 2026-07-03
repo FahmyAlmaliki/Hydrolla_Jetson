@@ -4,7 +4,7 @@
 Usage examples:
   python test_api.py schema
   python test_api.py telemetry
-  python test_api.py telemetry --base-url http://10.26.49.250:3030 --ph 7.2 --do 6.5 --temperature 28.4 --nh3 0.03
+  python test_api.py telemetry --base-url http://10.26.48.101:3030 --ph 7.2 --do 6.5 --temperature 28.4 --nh3 0.03
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from datetime import datetime, timezone, timedelta
 def normalize_base_url(value: str) -> str:
     value = value.strip().rstrip("/")
     if not value:
-        return "http://10.26.49.250:3030"
+        return "http://10.26.48.101:3030"
     if "://" not in value:
         return f"http://{value}"
     return value
@@ -32,7 +32,7 @@ def build_default_base_url() -> str:
         os.environ.get("HYDROLA_API_BASE_URL")
         or os.environ.get("API_BASE_URL")
         or os.environ.get("NEXT_PUBLIC_APP_URL")
-        or "http://10.26.49.250:3030"
+        or "http://10.26.48.101:3030"
     )
     return normalize_base_url(env_value)
 
@@ -106,7 +106,7 @@ def main() -> int:
         default="both",
         help="Endpoint yang akan diuji",
     )
-    parser.add_argument("--base-url", default=build_default_base_url(), help="Base URL aplikasi, contoh http://10.26.49.250:3030")
+    parser.add_argument("--base-url", default=build_default_base_url(), help="Base URL aplikasi, contoh http://10.26.48.101:3030")
     parser.add_argument("--sensor-id", default="esp32-kolam-01", help="Sensor ID untuk payload telemetry")
     parser.add_argument("--location", default="kolam-utama", help="Lokasi sensor")
     parser.add_argument("--timestamp", default=None, help="Timestamp ISO 8601, default waktu sekarang WIB")

@@ -5,7 +5,7 @@
 
 const char* WIFI_SSID = "YOUR_WIFI_SSID";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-const char* API_URL = "http://10.26.49.250:3030/api/telemetry";
+const char* API_URL = "http://10.26.48.101:3030/api/telemetry";
 
 const char* SENSOR_ID = "esp32-kolam-01";
 const char* LOCATION = "kolam-utama";

@@ -4,7 +4,7 @@
 Examples:
   python random_post_api.py
   python random_post_api.py --count 10 --interval 2
-  python random_post_api.py --base-url http://10.26.49.250:3030 --sensor-id esp32-kolam-02
+  python random_post_api.py --base-url http://10.26.48.101:3030 --sensor-id esp32-kolam-02
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from datetime import datetime, timedelta, timezone
 def normalize_base_url(value: str) -> str:
     value = value.strip().rstrip("/")
     if not value:
-        return "http://10.26.49.250:3030"
+        return "http://10.26.48.101:3030"
     if "://" not in value:
         return f"http://{value}"
     return value
@@ -32,7 +32,7 @@ def default_base_url() -> str:
     env_value = (
         os.environ.get("HYDROLA_API_BASE_URL")
         or os.environ.get("API_BASE_URL")
-        or "http://10.26.49.250:3030"
+        or "http://10.26.48.101:3030"
     )
     return normalize_base_url(env_value)
 
@@ -96,7 +96,7 @@ def post_json(url: str, payload: dict) -> tuple[int, object]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Random telemetry poster for HYDROLA")
-    parser.add_argument("--base-url", default=default_base_url(), help="Base URL aplikasi, contoh http://10.26.49.250:3030")
+    parser.add_argument("--base-url", default=default_base_url(), help="Base URL aplikasi, contoh http://10.26.48.101:3030")
     parser.add_argument("--sensor-id", default="esp32-kolam-01", help="Sensor ID yang dikirim")
     parser.add_argument("--location", default="kolam-utama", help="Lokasi sensor")
     parser.add_argument("--count", type=int, default=1, help="Jumlah POST acak yang dikirim")

@@ -2,7 +2,7 @@
 
 Endpoint:
 
-`POST http://10.26.49.250:3030/api/telemetry`
+`POST http://10.26.48.101:3030/api/telemetry`
 
 Content-Type:
 
@@ -35,7 +35,7 @@ Keterangan:
 Contoh `curl` untuk uji manual:
 
 ```bash
-curl -X POST http://10.26.49.250:3030/api/telemetry \
+curl -X POST http://10.26.48.101:3030/api/telemetry \
   -H "Content-Type: application/json" \
   -d '{
     "sensor_id":"esp32-kolam-01",
