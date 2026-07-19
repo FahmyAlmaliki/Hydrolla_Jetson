@@ -33,6 +33,19 @@ services:
       NEXT_TELEMETRY_DISABLED: "1"
     restart: unless-stopped
 
+  telegram_bot:
+    build:
+      context: ./telegram_bot
+      dockerfile: Dockerfile
+    container_name: hydrolla_telegram_bot
+    env_file:
+      - .env
+    environment:
+      HYDROLLA_API_URL: http://web:3030
+    depends_on:
+      - web
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana

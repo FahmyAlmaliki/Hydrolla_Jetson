@@ -189,7 +189,7 @@ export default function WaterChart({
 
       {data.length < 2 && (
         <p className="mt-3 text-xs text-[var(--color-outline)]">
-          Grafik masih punya {data.length} sampel. Line chart baru akan terbentuk saat ada minimal 2 data historis.
+          Menunggu data sensor berikutnya… Grafik akan terbentuk setelah ada minimal 2 pembacaan.
         </p>
       )}
     </section>
