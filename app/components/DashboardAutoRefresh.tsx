@@ -164,13 +164,9 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
         onRangeChange={handleRangeChange}
       />
 
-      <section aria-label="Prediksi AI dan Peringatan" className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div className="lg:col-span-2">
-          <AIPredictionWidget />
-        </div>
-        <div className="lg:col-span-3">
-          <AlertTable alerts={data.alerts} />
-        </div>
+      <section aria-label="Prediksi AI dan Peringatan" className="flex flex-col gap-4">
+        <AIPredictionWidget data={data.aiPrediction} chart={data.aiChart} />
+        <AlertTable alerts={data.alerts} />
       </section>
     </div>
   );

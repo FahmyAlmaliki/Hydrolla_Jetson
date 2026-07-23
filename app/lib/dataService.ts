@@ -3,10 +3,13 @@ import {
   SensorReading,
   AlertEntry,
   ChartPoint,
+  AIPredictionResult,
+  AIPredictionChartPoint,
   mockSensorData,
   mockChartData,
   mockAlerts,
-  mockAIPrediction,
+  mockAIPredictionResult,
+  mockAIPredictionChart,
   getPhStatus,
   getDoStatus,
   getSuhuStatus,
@@ -216,6 +219,77 @@ async function fetchAlertsFromInflux(): Promise<AlertEntry[]> {
 }
 
 // ─────────────────────────────────────────────────────────────────
+//  AI Predictions — baca hasil inferensi dari InfluxDB
+// ─────────────────────────────────────────────────────────────────
+
+async function fetchAIPredictionFromInflux(): Promise<AIPredictionResult | null> {
+  const flux = `
+    from(bucket: "${INFLUX_BUCKET}")
+      |> range(start: -5m)
+      |> filter(fn: (r) => r._measurement == "ai_predictions")
+      |> last()
+      |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+  `;
+
+  try {
+    const rows = await runQuery(flux);
+    if (rows.length === 0) return null;
+
+    const row = rows[0];
+    return {
+      current_temperature: Number(row.current_temperature ?? 0),
+      current_ph:          Number(row.current_ph ?? 0),
+      current_do:          Number(row.current_do ?? 0),
+      predicted_temperature: Number(row.predicted_temperature ?? 0),
+      predicted_ph:         Number(row.predicted_ph ?? 0),
+      predicted_do:         Number(row.predicted_do ?? 0),
+      offset_temperature:   Number(row.offset_temperature ?? 0),
+      offset_ph:            Number(row.offset_ph ?? 0),
+      offset_do:            Number(row.offset_do ?? 0),
+      accuracy_temperature: Number(row.accuracy_temperature ?? 0),
+      accuracy_ph:          Number(row.accuracy_ph ?? 0),
+      accuracy_do:          Number(row.accuracy_do ?? 0),
+      status_temperature:   String(row.status_temperature ?? "OK") as "OK" | "ANOMALI",
+      status_ph:            String(row.status_ph ?? "OK") as "OK" | "ANOMALI",
+      status_do:            String(row.status_do ?? "OK") as "OK" | "ANOMALI",
+      timestamp:            String(row._time ?? new Date().toISOString()),
+    };
+  } catch (err) {
+    console.error("[HYDROLA] InfluxDB AI prediction query failed:", err);
+    return null;
+  }
+}
+
+async function fetchAIPredictionHistoryFromInflux(): Promise<AIPredictionChartPoint[]> {
+  const flux = `
+    from(bucket: "${INFLUX_BUCKET}")
+      |> range(start: -30m)
+      |> filter(fn: (r) => r._measurement == "ai_predictions")
+      |> sort(columns: ["_time"], desc: false)
+      |> limit(n: 20)
+      |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+  `;
+
+  try {
+    const rows = await runQuery(flux);
+    if (rows.length < 2) return [];
+
+    return rows.map((row, i) => ({
+      time: `${i}`,
+      actualSuhu: Number(row.current_temperature ?? 0),
+      predSuhu:   Number(row.predicted_temperature ?? 0),
+      actualPh:   Number(row.current_ph ?? 0),
+      predPh:     Number(row.predicted_ph ?? 0),
+      actualDo:   Number(row.current_do ?? 0),
+      predDo:     Number(row.predicted_do ?? 0),
+    }));
+  } catch (err) {
+    console.error("[HYDROLA] InfluxDB AI prediction history query failed:", err);
+    return [];
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
 //  Public API — dipakai oleh page.tsx & komponen lain
 // ─────────────────────────────────────────────────────────────────
 
@@ -223,7 +297,8 @@ export interface DashboardData {
   sensors: SensorReading[];
   chart: ChartPoint[];
   alerts: AlertEntry[];
-  aiPrediction: typeof mockAIPrediction;
+  aiPrediction: AIPredictionResult | null;
+  aiChart: AIPredictionChartPoint[];
   dataSource: "influxdb" | "mock";
 }
 
@@ -258,23 +333,27 @@ export async function getDashboardData(chartRange: ChartRange = "24h"): Promise<
       sensors:      mockSensorData,
       chart:        mockChartData,
       alerts:       mockAlerts,
-      aiPrediction: mockAIPrediction,
+      aiPrediction: null,
+      aiChart:      [],
       dataSource:   "mock",
     };
   }
 
   // Fetch semua secara paralel untuk efisiensi
-  const [sensors, chart, alerts] = await Promise.all([
+  const [sensors, chart, alerts, aiPrediction, aiChart] = await Promise.all([
     fetchSensorReadingsFromInflux(),
     fetchChartDataFromInflux(chartRange),
     fetchAlertsFromInflux(),
+    fetchAIPredictionFromInflux(),
+    fetchAIPredictionHistoryFromInflux(),
   ]);
 
   return {
     sensors,
     chart,
     alerts,
-    aiPrediction: mockAIPrediction, // AI masih mock sampai model LSTM diintegrasikan
+    aiPrediction,
+    aiChart,
     dataSource: "influxdb",
   };
 }

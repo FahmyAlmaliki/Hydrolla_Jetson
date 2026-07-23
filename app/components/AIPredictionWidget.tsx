@@ -1,78 +1,41 @@
 "use client";
 
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ReferenceLine,
-} from "recharts";
-import { mockAIPrediction } from "@/app/lib/mockData";
+import type { AIPredictionResult, AIPredictionChartPoint } from "@/app/lib/mockData";
+import PredictionCard from "@/app/components/PredictionCard";
+import PredictionChart from "@/app/components/PredictionChart";
 
-const TREND_CONFIG = {
-  MENURUN: {
-    label: "Tren Menurun",
-    labelShort: "Menurun",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 6 9 9 4-4 6.364 6.364M21 16h-5.25v5.25" />
-      </svg>
-    ),
-    textCls: "text-[var(--color-on-secondary-container)]",
-    bgCls:   "bg-[var(--color-secondary)]/10",
-    lineColor: "#006c49",
-    areaColor: "#006c49",
-  },
-  NAIK: {
-    label: "Tren Naik",
-    labelShort: "Naik",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 18 9-9 4 4L21.75 6M16.5 6h5.25v5.25" />
-      </svg>
-    ),
-    textCls: "text-[var(--color-error)]",
-    bgCls:   "bg-[var(--color-error-container)]/30",
-    lineColor: "#ba1a1a",
-    areaColor: "#ba1a1a",
-  },
-  STABIL: {
-    label: "Stabil",
-    labelShort: "Stabil",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-      </svg>
-    ),
-    textCls: "text-[var(--color-primary)]",
-    bgCls:   "bg-[var(--color-primary)]/10",
-    lineColor: "#006591",
-    areaColor: "#006591",
-  },
-} as const;
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-white/95 border border-[var(--color-outline-variant)] rounded-xl shadow-lg px-3 py-2 text-xs">
-      <p className="font-medium text-[var(--color-on-surface-variant)] mb-1">{label}</p>
-      <p className="font-bold font-mono" style={{ color: payload[0].color }}>
-        {payload[0].value.toFixed(3)} mg/L
-      </p>
-    </div>
-  );
+const ICONS = {
+  suhu: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
+    </svg>
+  ),
+  ph: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M19.428 15.428a2 2 0 0 0-1.022-.547l-2.387-.477a6 6 0 0 0-3.86.517l-.318.158a6 6 0 0 1-3.86.517L6.05 15.21a2 2 0 0 0-1.806.547M8 4h8l-1 1v5.172a2 2 0 0 0 .586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 0 0 9 10.172V5L8 4Z" />
+    </svg>
+  ),
+  do: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+    </svg>
+  ),
 };
 
-export default function AIPredictionWidget() {
-  const ai = mockAIPrediction;
-  const cfg = TREND_CONFIG[ai.trend];
-  const threshold = 0.05;
-  const willBreach = ai.forecast.some((p) => p.value >= threshold);
-
+export default function AIPredictionWidget({
+  data,
+  chart,
+}: {
+  data: AIPredictionResult | null;
+  chart: AIPredictionChartPoint[];
+}) {
   return (
-    <article className="bg-[var(--color-surface-container-lowest)] rounded-2xl border border-[var(--color-outline-variant)]/40 p-6 flex flex-col gap-5 animate-slide-up animation-delay-400">
+    <section aria-label="Prediksi AI" className="flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
@@ -81,78 +44,72 @@ export default function AIPredictionWidget() {
           </svg>
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-[var(--color-on-surface)]">Prediksi AI (LSTM)</h3>
-          <p className="text-xs text-[var(--color-outline)]">Proyeksi {ai.horizon}</p>
+          <h3 className="text-sm font-semibold text-[var(--color-on-surface)]">
+            Prediksi AI (CNN-LSTM)
+          </h3>
+          <p className="text-xs text-[var(--color-outline)]">
+            Model memprediksi nilai 1 langkah ke depan
+          </p>
         </div>
       </div>
 
-      {/* Status row */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs text-[var(--color-on-surface-variant)] mb-1.5">
-            Amonia (NH3) · 48 Jam ke Depan
-          </p>
-          <div className={["inline-flex items-center gap-2 px-3 py-1.5 rounded-xl font-semibold text-sm", cfg.bgCls, cfg.textCls].join(" ")}>
-            {cfg.icon}
-            {cfg.label}
+      {!data ? (
+        <div className="flex flex-col items-center justify-center gap-3 py-16 px-4 rounded-2xl border border-dashed border-[var(--color-outline-variant)]/50 bg-[var(--color-surface-container-lowest)]/50">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[var(--color-surface-container)] text-[var(--color-outline)]">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path d="M11.25 4.533A9.707 9.707 0 0 0 6 3a9.735 9.735 0 0 0-3.25.555.75.75 0 0 0-.5.707v14.25a.75.75 0 0 0 1 .707A8.237 8.237 0 0 1 6 18.75c1.995 0 3.823.707 5.25 1.886V4.533ZM12.75 20.636A8.214 8.214 0 0 1 18 18.75c.966 0 1.89.166 2.75.47a.75.75 0 0 0 1-.708V4.262a.75.75 0 0 0-.5-.707A9.735 9.735 0 0 0 18 3a9.707 9.707 0 0 0-5.25 1.533v16.103Z" />
+            </svg>
           </div>
-        </div>
-
-        <div className="text-right">
-          <p className="text-xs text-[var(--color-outline)] mb-1">Akurasi Model</p>
-          <p className="text-2xl font-bold tabular-nums text-[var(--color-on-surface)]">
-            {ai.confidence}
-            <span className="text-sm font-medium text-[var(--color-outline)] ml-0.5">%</span>
+          <p className="text-sm font-medium text-[var(--color-on-surface-variant)]">
+            Data prediksi AI belum tersedia
+          </p>
+          <p className="text-xs text-[var(--color-outline)] text-center max-w-sm">
+            Model CNN-LSTM membutuhkan minimal 20 data sensor untuk mulai melakukan inferensi. Data sensor akan otomatis dikumpulkan dari InfluxDB.
           </p>
         </div>
-      </div>
-
-      {/* Forecast mini chart */}
-      <div className="w-full h-28 -mx-1">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={ai.forecast} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-            <defs>
-              <linearGradient id="aiGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor={cfg.areaColor} stopOpacity={0.2} />
-                <stop offset="95%" stopColor={cfg.areaColor} stopOpacity={0}   />
-              </linearGradient>
-            </defs>
-            <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--color-outline)" }} tickLine={false} axisLine={false} />
-            <YAxis domain={[0, 0.07]} tick={{ fontSize: 9, fill: "var(--color-outline)" }} tickLine={false} axisLine={false} tickCount={4} />
-            <Tooltip content={<CustomTooltip />} />
-            <ReferenceLine y={threshold} stroke="#d88a00" strokeDasharray="4 2" strokeWidth={1.5} />
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke={cfg.lineColor}
-              strokeWidth={2}
-              fill="url(#aiGrad)"
-              dot={{ r: 3, fill: cfg.lineColor, strokeWidth: 0 }}
-              activeDot={{ r: 5, strokeWidth: 2, stroke: cfg.lineColor, fill: "white" }}
+      ) : (
+        <>
+          {/* 3 Prediction Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <PredictionCard
+              label="Suhu"
+              unit="°C"
+              currentValue={data.current_temperature}
+              predictedValue={data.predicted_temperature}
+              offset={data.offset_temperature}
+              accuracy={data.accuracy_temperature}
+              status={data.status_temperature}
+              icon={ICONS.suhu}
+              delay={0}
             />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+            <PredictionCard
+              label="pH"
+              unit=""
+              currentValue={data.current_ph}
+              predictedValue={data.predicted_ph}
+              offset={data.offset_ph}
+              accuracy={data.accuracy_ph}
+              status={data.status_ph}
+              icon={ICONS.ph}
+              delay={80}
+            />
+            <PredictionCard
+              label="DO (Oksigen)"
+              unit="mg/L"
+              currentValue={data.current_do}
+              predictedValue={data.predicted_do}
+              offset={data.offset_do}
+              accuracy={data.accuracy_do}
+              status={data.status_do}
+              icon={ICONS.do}
+              delay={160}
+            />
+          </div>
 
-      {/* Breach warning */}
-      {willBreach && (
-        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[var(--color-error-container)]/30 text-[var(--color-on-error-container)]">
-          <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-          </svg>
-          <p className="text-xs font-medium">Prediksi menyentuh ambang batas kritis (≥ 0.05 mg/L)</p>
-        </div>
+          {/* Prediction Trend Chart */}
+          <PredictionChart data={chart} />
+        </>
       )}
-
-      {/* No breach */}
-      {!willBreach && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--color-secondary)]/8 text-[var(--color-on-secondary-container)]">
-          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
-          </svg>
-          <p className="text-xs font-medium">Tidak ada prediksi bahaya dalam 48 jam ke depan</p>
-        </div>
-      )}
-    </article>
+    </section>
   );
 }

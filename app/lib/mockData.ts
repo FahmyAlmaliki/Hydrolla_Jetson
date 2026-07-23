@@ -108,16 +108,81 @@ export const mockAlerts: AlertEntry[] = [
   { id: "5", status: "WASPADA", parameter: "pH Tinggi",   value: "8.7",    time: "11:10", date: "7 Okt" },
 ];
 
-/** AI prediction mock */
-export const mockAIPrediction = {
-  parameter: "Amonia (NH3)",
-  horizon: "48 Jam ke Depan",
-  trend: "MENURUN" as "MENURUN" | "NAIK" | "STABIL",
-  confidence: 94.2,
-  predictedMax: 0.038,
-  safe: true,
-  forecast: Array.from({ length: 9 }, (_, i) => ({
-    label: `+${(i + 1) * 6}j`,
-    value: parseFloat((0.02 - i * 0.001 + (Math.random() - 0.5) * 0.003).toFixed(3)),
-  })),
+// ── AI Prediction types ──────────────────────────────────────
+
+export type AnomalyStatus = "OK" | "ANOMALI";
+
+export interface AIPredictionResult {
+  current_temperature: number;
+  current_ph: number;
+  current_do: number;
+  predicted_temperature: number;
+  predicted_ph: number;
+  predicted_do: number;
+  offset_temperature: number;
+  offset_ph: number;
+  offset_do: number;
+  accuracy_temperature: number;
+  accuracy_ph: number;
+  accuracy_do: number;
+  status_temperature: AnomalyStatus;
+  status_ph: AnomalyStatus;
+  status_do: AnomalyStatus;
+  timestamp: string;
+}
+
+export function getAnomalyLabel(s: AnomalyStatus): string {
+  return s === "ANOMALI" ? "Anomali" : "Normal";
+}
+
+export function getAnomalyStatus(s: AnomalyStatus): StatusLevel {
+  return s === "ANOMALI" ? "KRITIS" : "BAIK";
+}
+
+export interface AIPredictionChartPoint {
+  time: string;
+  actualSuhu: number;
+  predSuhu: number;
+  actualPh: number;
+  predPh: number;
+  actualDo: number;
+  predDo: number;
+}
+
+/** Mock AI prediction (fallback ketika InfluxDB belum ada data AI) */
+export const mockAIPredictionResult: AIPredictionResult = {
+  current_temperature: 26.5,
+  current_ph: 7.2,
+  current_do: 6.5,
+  predicted_temperature: 26.8,
+  predicted_ph: 7.15,
+  predicted_do: 6.3,
+  offset_temperature: -0.3,
+  offset_ph: 0.05,
+  offset_do: 0.2,
+  accuracy_temperature: 96.2,
+  accuracy_ph: 94.8,
+  accuracy_do: 95.1,
+  status_temperature: "OK",
+  status_ph: "OK",
+  status_do: "OK",
+  timestamp: new Date().toISOString(),
 };
+
+export const mockAIPredictionChart: AIPredictionChartPoint[] = Array.from(
+  { length: 20 },
+  (_, i) => {
+    const baseSuhu = 27 + Math.sin(i * 0.3) * 0.5;
+    const basePh = 7.2 + Math.sin(i * 0.25) * 0.15;
+    const baseDo = 6.5 + Math.cos(i * 0.2) * 0.4;
+    return {
+      time: `${String(i).padStart(2, "0")}`,
+      actualSuhu: parseFloat((baseSuhu + (Math.random() - 0.5) * 0.1).toFixed(1)),
+      predSuhu: parseFloat((baseSuhu + 0.3 + (Math.random() - 0.5) * 0.1).toFixed(1)),
+      actualPh: parseFloat((basePh + (Math.random() - 0.5) * 0.02).toFixed(2)),
+      predPh: parseFloat((basePh - 0.05 + (Math.random() - 0.5) * 0.02).toFixed(2)),
+      actualDo: parseFloat((baseDo + (Math.random() - 0.5) * 0.05).toFixed(2)),
+      predDo: parseFloat((baseDo - 0.2 + (Math.random() - 0.5) * 0.05).toFixed(2)),
+    };
+  },
+);
