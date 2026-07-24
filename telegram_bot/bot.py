@@ -5,7 +5,7 @@ Jalankan bot ini untuk menerima command dari Telegram.
 
 Commands:
   /start       — Pesan sambutan
-  /datasensor  — Kirim data sensor terbaru (pH, DO, Suhu, NH3)
+  /datasensor  — Kirim data sensor terbaru (pH, DO, Suhu)
   /help        — Daftar command
 
 Environment variables (dari .env):
@@ -118,7 +118,7 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Berikut daftar command yang tersedia:\n\n"
         "🔹 `/datasensor`\n"
         "   Menampilkan data sensor terbaru\\:\n"
-        "   pH, DO, Suhu, dan Amonia \\(NH3\\)\n"
+        "   pH, DO, dan Suhu\n"
         "   beserta status kondisinya\\.\n\n"
         "🔹 `/start` — Pesan sambutan\n"
         "🔹 `/help` — Tampilkan pesan ini\n\n"
@@ -181,7 +181,6 @@ async def cmd_datasensor(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     ph_line   = fmt_sensor("pH",   "",      "🔬")
     do_line   = fmt_sensor("DO",   "mg/L",  "💧")
     suhu_line = fmt_sensor("Suhu", "°C",    "🌡")
-    nh3_line  = fmt_sensor("NH3",  "mg/L",  "☣️")
 
     # Cek apakah ada kondisi KRITIS
     all_statuses = [s.get("status", "BAIK") for s in sensors]
@@ -204,8 +203,7 @@ async def cmd_datasensor(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         f"{'─' * 28}\n\n"
         f"{ph_line}\n"
         f"{do_line}\n"
-        f"{suhu_line}\n"
-        f"{nh3_line}\n\n"
+        f"{suhu_line}\n\n"
         f"{'─' * 28}\n"
         f"{overall}\n\n"
         f"{src_icon} Sumber: {src_label}"
