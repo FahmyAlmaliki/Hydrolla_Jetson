@@ -15,19 +15,14 @@ import {
 import { ChartPoint } from "@/app/lib/mockData";
 import type { ChartRange } from "@/app/lib/dataService";
 
-type Filter = "Semua" | "pH" | "DO" | "Suhu" | "NH3";
+type Filter = "Semua" | "pH" | "DO" | "Suhu";
 
 const SERIES_CONFIG = {
   pH:   { color: "#006591", label: "pH",           yAxisId: "left"  },
   DO:   { color: "#006c49", label: "DO (mg/L)",    yAxisId: "left"  },
   suhu: { color: "#d88a00", label: "Suhu (°C)",    yAxisId: "right" },
-  NH3:  { color: "#ba1a1a", label: "NH3 (×10 mg/L)", yAxisId: "left" },
 } as const;
 
-// scale NH3 for visibility on the same axis as pH & DO
-function transformPoint(p: ChartPoint) {
-  return { ...p, NH3: p.NH3 * 10 };
-}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -38,9 +33,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <div key={entry.dataKey} className="flex justify-between gap-6 mb-1">
           <span style={{ color: entry.color }} className="font-medium">{entry.name}</span>
           <span className="font-mono font-semibold text-[var(--color-on-surface)]">
-            {entry.dataKey === "NH3"
-              ? (entry.value / 10).toFixed(3)
-              : entry.value}
+            {entry.value}
           </span>
         </div>
       ))}
@@ -58,14 +51,15 @@ export default function WaterChart({
   onRangeChange: (range: ChartRange) => void;
 }) {
   const [filter, setFilter] = useState<Filter>("Semua");
-  const transformed = data.map(transformPoint);
 
-  const filters: Filter[] = ["Semua", "pH", "DO", "Suhu", "NH3"];
+  const filters: Filter[] = ["Semua", "pH", "DO", "Suhu"];
   const show = (key: Filter) => filter === "Semua" || filter === key;
   const rangeOptions: Array<{ value: ChartRange; label: string }> = [
-    { value: "6h", label: "6 Jam" },
+    { value: "30m", label: "30 Mnt" },
+    { value: "1h",  label: "1 Jam" },
+    { value: "6h",  label: "6 Jam" },
     { value: "24h", label: "24 Jam" },
-    { value: "7d", label: "7 Hari" },
+    { value: "7d",  label: "7 Hari" },
     { value: "30d", label: "30 Hari" },
   ];
 
@@ -121,7 +115,7 @@ export default function WaterChart({
       {/* Chart */}
       <div className="w-full h-56 sm:h-72 min-w-0">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={transformed} margin={{ top: 4, right: 16, bottom: 0, left: -8 }}>
+          <LineChart data={data} margin={{ top: 4, right: 16, bottom: 0, left: -8 }}>
             <defs>
               <linearGradient id="phGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%"  stopColor="#006591" stopOpacity={0.1} />
@@ -179,9 +173,6 @@ export default function WaterChart({
             )}
             {show("Suhu") && (
               <Line yAxisId="right" type="monotone" dataKey="suhu" name="Suhu (°C)"   stroke={SERIES_CONFIG.suhu.color} strokeWidth={2} dot={false} activeDot={{ r: 5, strokeWidth: 2 }} />
-            )}
-            {show("NH3") && (
-              <Line yAxisId="left"  type="monotone" dataKey="NH3"  name="NH3 (×10 mg/L)" stroke={SERIES_CONFIG.NH3.color}  strokeWidth={2} dot={false} activeDot={{ r: 5, strokeWidth: 2 }} strokeDasharray="5 3" />
             )}
           </LineChart>
         </ResponsiveContainer>

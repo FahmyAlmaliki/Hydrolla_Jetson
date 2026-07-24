@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const rangeParam = url.searchParams.get("range");
-  const chartRange = rangeParam === "6h" || rangeParam === "24h" || rangeParam === "7d" || rangeParam === "30d"
-    ? rangeParam
+  const validRanges = ["30m", "1h", "6h", "24h", "7d", "30d"];
+  const chartRange = validRanges.includes(rangeParam as string)
+    ? (rangeParam as any)
     : "24h";
 
   const data = await getDashboardData(chartRange);

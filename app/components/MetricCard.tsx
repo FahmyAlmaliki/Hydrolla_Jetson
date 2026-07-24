@@ -4,13 +4,14 @@ import { SensorReading, StatusLevel } from "@/app/lib/mockData";
 
 const STATUS_CONFIG: Record<
   StatusLevel,
-  { label: string; bg: string; text: string; border: string; valueCls: string }
+  { label: string; bg: string; text: string; border: string; dot: string; valueCls: string }
 > = {
   BAIK: {
     label: "Baik",
     bg: "bg-[var(--color-secondary)]/8",
     text: "text-[var(--color-on-secondary-container)]",
     border: "border-[var(--color-secondary-container)]/40",
+    dot: "bg-[var(--color-secondary)]",
     valueCls: "text-[var(--color-on-surface)]",
   },
   WASPADA: {
@@ -18,6 +19,7 @@ const STATUS_CONFIG: Record<
     bg: "bg-[var(--color-tertiary-container)]/15",
     text: "text-[var(--color-on-tertiary-container)]",
     border: "border-[var(--color-tertiary-container)]/40",
+    dot: "bg-[var(--color-tertiary)]",
     valueCls: "text-[var(--color-tertiary)]",
   },
   KRITIS: {
@@ -25,6 +27,7 @@ const STATUS_CONFIG: Record<
     bg: "bg-[var(--color-error-container)]/30",
     text: "text-[var(--color-on-error-container)]",
     border: "border-[var(--color-error)]/40",
+    dot: "bg-[var(--color-error)]",
     valueCls: "text-[var(--color-error)]",
   },
 };
@@ -50,20 +53,15 @@ const PARAM_ICONS: Record<SensorReading["parameter"], React.ReactNode> = {
         d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
     </svg>
   ),
-  NH3: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5">
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-    </svg>
-  ),
 };
 
-const SPARKLINE_COLORS: Record<StatusLevel, string> = {
-  BAIK:    "#006c49",
-  WASPADA: "#d88a00",
-  KRITIS:  "#ba1a1a",
+const PARAM_LABELS: Record<SensorReading["parameter"], string> = {
+  Suhu: "Suhu",
+  pH: "pH",
+  DO: "DO (Oksigen)",
 };
 
+/** Mini sparkline used in the "history" column */
 function Sparkline({ data, color }: { data: number[]; color: string }) {
   const max = Math.max(...data);
   const min = Math.min(...data);
@@ -79,7 +77,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   const area = `0,${H} ${polyline} ${W},${H}`;
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-9">
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-8">
       <defs>
         <linearGradient id={`sg-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%"   stopColor={color} stopOpacity="0.25" />
@@ -92,6 +90,12 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   );
 }
 
+const SPARKLINE_COLORS: Record<StatusLevel, string> = {
+  BAIK:    "#006c49",
+  WASPADA: "#d88a00",
+  KRITIS:  "#ba1a1a",
+};
+
 export default function MetricCard({
   data,
   delay = 0,
@@ -101,6 +105,23 @@ export default function MetricCard({
 }) {
   const cfg = STATUS_CONFIG[data.status];
   const sparkColor = SPARKLINE_COLORS[data.status];
+
+  // Derive a "predicted" value by using the last history value (next reading estimate)
+  // and a "trend" offset from history for display purposes
+  const history = data.history;
+  const lastVal = history[history.length - 1] ?? data.value;
+  const prevVal = history[history.length - 2] ?? lastVal;
+  const trend = lastVal - prevVal;
+  const isTrendUp = trend > 0.001;
+  const isTrendDown = trend < -0.001;
+  const trendColor = isTrendUp
+    ? "text-[var(--color-error)]"
+    : isTrendDown
+      ? "text-[var(--color-secondary)]"
+      : "text-[var(--color-outline)]";
+
+  // Format decimals based on unit
+  const decimals = data.unit === "°C" ? 1 : data.unit === "mg/L" ? 2 : 2;
 
   return (
     <article
@@ -120,7 +141,7 @@ export default function MetricCard({
               {PARAM_ICONS[data.parameter]}
             </span>
             <h3 className="text-xs font-semibold uppercase tracking-widest text-[var(--color-on-surface-variant)]">
-              {data.parameter === "NH3" ? "Amonia (NH3)" : data.parameter === "DO" ? "DO (Oksigen)" : data.parameter}
+              {PARAM_LABELS[data.parameter]}
             </h3>
           </div>
 
@@ -129,37 +150,57 @@ export default function MetricCard({
             "shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold",
             cfg.bg, cfg.text,
           ].join(" ")}>
-            {data.status === "WASPADA" && (
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-              </svg>
-            )}
-            {data.status === "KRITIS" && (
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clipRule="evenodd" />
-              </svg>
-            )}
+            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
             {cfg.label}
           </span>
         </div>
 
-        {/* Value */}
-        <div className="flex items-baseline gap-1.5">
-          <span className={["text-4xl font-bold tabular-nums tracking-tight leading-none", cfg.valueCls].join(" ")}>
-            {data.value}
-          </span>
-          {data.unit && (
-            <span className="text-sm font-medium text-[var(--color-outline)]">{data.unit}</span>
-          )}
+        {/* Value row: current (big) + last history reading */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <p className="text-[10px] font-medium text-[var(--color-outline)] uppercase tracking-wider mb-1">
+              Terkini
+            </p>
+            <p className={["text-2xl font-bold tabular-nums", cfg.valueCls].join(" ")}>
+              {data.value.toFixed(decimals)}
+              <span className="text-xs font-medium text-[var(--color-outline)] ml-0.5">{data.unit}</span>
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] font-medium text-[var(--color-outline)] uppercase tracking-wider mb-1">
+              Sebelumnya
+            </p>
+            <p className="text-2xl font-bold tabular-nums text-[var(--color-on-surface-variant)]">
+              {prevVal.toFixed(decimals)}
+              <span className="text-xs font-medium text-[var(--color-outline)] ml-0.5">{data.unit}</span>
+            </p>
+          </div>
         </div>
 
-        {/* Ideal range */}
-        <p className="text-xs text-[var(--color-outline)]">{data.idealLabel}</p>
+        {/* Trend + ideal range */}
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-[var(--color-outline-variant)]/30">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-[var(--color-outline)]">Tren:</span>
+            <span className={`inline-flex items-center gap-0.5 font-semibold ${trendColor}`}>
+              {isTrendUp ? (
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+              ) : isTrendDown ? (
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              ) : null}
+              {trend > 0 ? "+" : ""}{trend.toFixed(decimals)}
+            </span>
+          </div>
+          <p className="text-xs text-[var(--color-outline)]">{data.idealLabel}</p>
+        </div>
       </div>
 
       {/* Sparkline strip */}
       <div className="mt-auto">
-        <Sparkline data={data.history} color={sparkColor} />
+        <Sparkline data={history} color={sparkColor} />
       </div>
     </article>
   );

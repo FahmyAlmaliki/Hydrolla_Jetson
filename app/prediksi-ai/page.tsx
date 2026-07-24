@@ -1,5 +1,5 @@
 import { getDashboardData } from "@/app/lib/dataService";
-import AIPredictionWidget from "@/app/components/AIPredictionWidget";
+import PredictionAutoRefresh from "@/app/components/PredictionAutoRefresh";
 
 export const revalidate = 10;
 
@@ -15,7 +15,7 @@ export default async function AIPredictionPage() {
           Hasil inferensi model untuk memantau tren kualitas air
         </p>
       </div>
-      <AIPredictionWidget data={data.aiPrediction} chart={data.aiChart} />
+      <PredictionAutoRefresh initialData={data} />
     </div>
   );
 }

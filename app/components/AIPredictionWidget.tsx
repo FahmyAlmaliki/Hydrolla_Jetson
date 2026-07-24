@@ -30,9 +30,11 @@ const ICONS = {
 export default function AIPredictionWidget({
   data,
   chart,
+  loading = false,
 }: {
   data: AIPredictionResult | null;
   chart: AIPredictionChartPoint[];
+  loading?: boolean;
 }) {
   return (
     <section aria-label="Prediksi AI" className="flex flex-col gap-4">
@@ -43,7 +45,7 @@ export default function AIPredictionWidget({
             <path d="M11.25 4.533A9.707 9.707 0 0 0 6 3a9.735 9.735 0 0 0-3.25.555.75.75 0 0 0-.5.707v14.25a.75.75 0 0 0 1 .707A8.237 8.237 0 0 1 6 18.75c1.995 0 3.823.707 5.25 1.886V4.533ZM12.75 20.636A8.214 8.214 0 0 1 18 18.75c.966 0 1.89.166 2.75.47a.75.75 0 0 0 1-.708V4.262a.75.75 0 0 0-.5-.707A9.735 9.735 0 0 0 18 3a9.707 9.707 0 0 0-5.25 1.533v16.103Z" />
           </svg>
         </div>
-        <div>
+        <div className="flex-1">
           <h3 className="text-sm font-semibold text-[var(--color-on-surface)]">
             Prediksi AI (CNN-LSTM)
           </h3>
@@ -51,9 +53,19 @@ export default function AIPredictionWidget({
             Model memprediksi nilai 1 langkah ke depan
           </p>
         </div>
+        {loading && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
+            <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3"/>
+              <path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            </svg>
+            Memuat...
+          </div>
+        )}
       </div>
 
       {!data ? (
+        /* ── No data state ── */
         <div className="flex flex-col items-center justify-center gap-3 py-16 px-4 rounded-2xl border border-dashed border-[var(--color-outline-variant)]/50 bg-[var(--color-surface-container-lowest)]/50">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[var(--color-surface-container)] text-[var(--color-outline)]">
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
@@ -64,10 +76,12 @@ export default function AIPredictionWidget({
             Data prediksi AI belum tersedia
           </p>
           <p className="text-xs text-[var(--color-outline)] text-center max-w-sm">
-            Model CNN-LSTM membutuhkan minimal 20 data sensor untuk mulai melakukan inferensi. Data sensor akan otomatis dikumpulkan dari InfluxDB.
+            Model CNN-LSTM membutuhkan minimal 20 data sensor untuk mulai melakukan inferensi.
+            Data sensor akan otomatis dikumpulkan dari InfluxDB.
           </p>
         </div>
       ) : (
+        /* ── Data loaded ── */
         <>
           {/* 3 Prediction Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

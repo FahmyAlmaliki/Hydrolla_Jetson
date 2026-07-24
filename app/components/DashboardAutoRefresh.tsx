@@ -4,54 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import MetricCard from "@/app/components/MetricCard";
 import WaterChart from "@/app/components/WaterChart";
 import AIPredictionWidget from "@/app/components/AIPredictionWidget";
-import AlertTable from "@/app/components/AlertTable";
 import type { ChartRange, DashboardData } from "@/app/lib/dataService";
 import type { ChartPoint } from "@/app/lib/mockData";
 
 const REFRESH_MS = 10_000;
 const DEFAULT_RANGE: ChartRange = "24h";
-/** Jumlah maksimum titik yang ditampilkan di grafik live */
-const MAX_LIVE_POINTS = 60;
-
-/** Format jam:menit untuk label sumbu X */
-function nowLabel(): string {
-  const d = new Date();
-  return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-}
-
-/** Buat satu ChartPoint dari data sensors terbaru */
-function sensorToPoint(sensors: DashboardData["sensors"]): ChartPoint {
-  const get = (param: string) => sensors.find((s) => s.parameter === param)?.value ?? 0;
-  return {
-    time: nowLabel(),
-    pH:   get("pH"),
-    DO:   get("DO"),
-    suhu: get("Suhu"),
-    NH3:  get("NH3"),
-  };
-}
 
 export default function DashboardAutoRefresh({ initialData }: { initialData: DashboardData }) {
   const [data, setData] = useState(initialData);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>(new Date().toISOString());
   const [chartRange, setChartRange] = useState<ChartRange>(DEFAULT_RANGE);
-
-  /**
-   * livePoints: titik-titik yang ditampilkan di grafik.
-   * Diinisialisasi dari sensor awal sebagai satu titik flat,
-   * lalu bertambah setiap kali refresh berhasil.
-   */
-  const [livePoints, setLivePoints] = useState<ChartPoint[]>(() => [
-    sensorToPoint(initialData.sensors),
-  ]);
-
-  /**
-   * Ref agar closure refresh() selalu baca nilai livePoints terbaru
-   * tanpa perlu dimasukkan ke dependency array (yang akan reset interval).
-   */
-  const livePointsRef = useRef(livePoints);
-  livePointsRef.current = livePoints;
 
   useEffect(() => {
     let cancelled = false;
@@ -66,16 +29,6 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
         if (!cancelled) {
           setData(nextData);
           setLastUpdated(new Date().toISOString());
-
-          // Tambahkan titik baru dari nilai sensor terkini
-          const newPoint = sensorToPoint(nextData.sensors);
-          setLivePoints((prev) => {
-            const updated = [...prev, newPoint];
-            // Batasi panjang agar chart tidak terus melebar
-            return updated.length > MAX_LIVE_POINTS
-              ? updated.slice(updated.length - MAX_LIVE_POINTS)
-              : updated;
-          });
         }
       } catch {
         // Pertahankan data terakhir jika refresh gagal
@@ -94,9 +47,6 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
 
   function handleRangeChange(nextRange: ChartRange) {
     setChartRange(nextRange);
-    // Reset live points ke titik tunggal dari nilai sensor saat ini
-    // supaya grafik mulai ulang dari nilai real, bukan lompat ke mock historis
-    setLivePoints([sensorToPoint(data.sensors)]);
   }
 
   return (
@@ -116,7 +66,7 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
             title={
               data.dataSource === "influxdb"
                 ? "Terhubung ke InfluxDB"
-                : "Mode demo — InfluxDB belum dikonfigurasi"
+                : "InfluxDB belum dikonfigurasi"
             }
             className={[
               "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold",
@@ -133,7 +83,7 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
                   : "bg-[var(--color-outline)]",
               ].join(" ")}
             />
-            {data.dataSource === "influxdb" ? "Live · InfluxDB" : "Demo · Mock"}
+            {data.dataSource === "influxdb" ? "Live · InfluxDB" : "Tidak Terhubung"}
           </span>
 
           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--color-surface-container-high)] text-[var(--color-on-surface-variant)]">
@@ -151,22 +101,33 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
       </div>
 
       <section aria-label="Ringkasan Sensor">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {data.sensors.map((sensor, i) => (
-            <MetricCard key={sensor.parameter} data={sensor} delay={i * 80} />
-          ))}
-        </div>
+        {data.sensors.length === 0 ? (
+          <div className="flex items-center justify-center gap-3 py-10 px-4 rounded-2xl border border-dashed border-[var(--color-outline-variant)]/50 bg-[var(--color-surface-container-lowest)]/50">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-6 h-6 text-[var(--color-outline)] shrink-0">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-[var(--color-on-surface-variant)]">Menunggu data sensor...</p>
+              <p className="text-xs text-[var(--color-outline)] mt-0.5">Belum ada pembacaan dari InfluxDB dalam 7 hari terakhir</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {data.sensors.map((sensor, i) => (
+              <MetricCard key={sensor.parameter} data={sensor} delay={i * 80} />
+            ))}
+          </div>
+        )}
       </section>
 
       <WaterChart
-        data={livePoints}
+        data={data.chart}
         range={chartRange}
         onRangeChange={handleRangeChange}
       />
 
       <section aria-label="Prediksi AI dan Peringatan" className="flex flex-col gap-4">
-        <AIPredictionWidget data={data.aiPrediction} chart={data.aiChart} />
-        <AlertTable alerts={data.alerts} />
+        <AIPredictionWidget data={data.aiPrediction} chart={data.aiChart} loading={refreshing} />
       </section>
     </div>
   );

@@ -32,7 +32,7 @@ INFLUXDB_ORG = os.environ.get("INFLUXDB_ORG", "flagship")
 INFLUXDB_BUCKET = os.environ.get("INFLUXDB_BUCKET", "sensor")
 
 LOOKBACK = 20
-INTERVAL_SEC = int(os.environ.get("AI_INFERENCE_INTERVAL", "60"))
+INTERVAL_SEC = int(os.environ.get("AI_INFERENCE_INTERVAL", "10"))
 
 # ── Threshold dari Jetson_AI_Core.py ──────────────────────────
 THRESHOLD_RESIDU_DO = 0.8
@@ -68,7 +68,7 @@ def get_influx_client():
 def fetch_recent_data(client) -> dict | None:
     query = f"""
     from(bucket: "{INFLUXDB_BUCKET}")
-      |> range(start: -2m)
+      |> range(start: -24h)
       |> filter(fn: (r) => r._measurement == "water_quality")
       |> filter(fn: (r) => r._field == "ph" or r._field == "do" or r._field == "temperature")
       |> last()
@@ -89,7 +89,7 @@ def fetch_lookback_data(client) -> tuple | None:
     limit = LOOKBACK * 2
     query_ph = f"""
     from(bucket: "{INFLUXDB_BUCKET}")
-      |> range(start: -10m)
+      |> range(start: -24h)
       |> filter(fn: (r) => r._measurement == "water_quality")
       |> filter(fn: (r) => r._field == "ph")
       |> sort(columns: ["_time"], desc: false)
@@ -97,7 +97,7 @@ def fetch_lookback_data(client) -> tuple | None:
     """
     query_do = f"""
     from(bucket: "{INFLUXDB_BUCKET}")
-      |> range(start: -10m)
+      |> range(start: -24h)
       |> filter(fn: (r) => r._measurement == "water_quality")
       |> filter(fn: (r) => r._field == "do")
       |> sort(columns: ["_time"], desc: false)
@@ -105,7 +105,7 @@ def fetch_lookback_data(client) -> tuple | None:
     """
     query_suhu = f"""
     from(bucket: "{INFLUXDB_BUCKET}")
-      |> range(start: -10m)
+      |> range(start: -24h)
       |> filter(fn: (r) => r._measurement == "water_quality")
       |> filter(fn: (r) => r._field == "temperature")
       |> sort(columns: ["_time"], desc: false)
