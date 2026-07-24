@@ -150,14 +150,21 @@ async function fetchChartDataFromInflux(range: ChartRange): Promise<ChartPoint[]
 
     return rows.map((row) => {
       const t  = new Date(row._time as string);
-      const hh = t.getHours().toString().padStart(2, "0");
-      const mm = t.getMinutes().toString().padStart(2, "0");
       
-      let timeLabel = `${hh}:${mm}`;
+      // Paksa zona waktu ke WIB (Asia/Jakarta) agar tidak berantakan saat di-deploy ke Docker (yang default-nya UTC)
+      const timeStr = t.toLocaleTimeString("id-ID", {
+        timeZone: "Asia/Jakarta",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }).replace(/\./g, ":"); // Format id-ID kadang memakai titik (mis. 09.11)
+      
+      let timeLabel = timeStr;
       if (range === "30d") {
-        timeLabel = t.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+        timeLabel = t.toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short" });
       } else if (range === "7d") {
-        timeLabel = `${t.toLocaleDateString("id-ID", { day: "numeric", month: "short" })} ${hh}:${mm}`;
+        const dateStr = t.toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short" });
+        timeLabel = `${dateStr} ${timeStr}`;
       }
 
       return {
