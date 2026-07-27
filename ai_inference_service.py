@@ -92,24 +92,27 @@ def fetch_lookback_data(client) -> tuple | None:
       |> range(start: -24h)
       |> filter(fn: (r) => r._measurement == "water_quality")
       |> filter(fn: (r) => r._field == "ph")
-      |> sort(columns: ["_time"], desc: false)
+      |> sort(columns: ["_time"], desc: true)
       |> limit(n: {limit})
+      |> sort(columns: ["_time"], desc: false)
     """
     query_do = f"""
     from(bucket: "{INFLUXDB_BUCKET}")
       |> range(start: -24h)
       |> filter(fn: (r) => r._measurement == "water_quality")
       |> filter(fn: (r) => r._field == "do")
-      |> sort(columns: ["_time"], desc: false)
+      |> sort(columns: ["_time"], desc: true)
       |> limit(n: {limit})
+      |> sort(columns: ["_time"], desc: false)
     """
     query_suhu = f"""
     from(bucket: "{INFLUXDB_BUCKET}")
       |> range(start: -24h)
       |> filter(fn: (r) => r._measurement == "water_quality")
       |> filter(fn: (r) => r._field == "temperature")
-      |> sort(columns: ["_time"], desc: false)
+      |> sort(columns: ["_time"], desc: true)
       |> limit(n: {limit})
+      |> sort(columns: ["_time"], desc: false)
     """
 
     qapi = client.query_api()
