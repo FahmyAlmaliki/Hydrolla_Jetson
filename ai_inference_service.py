@@ -269,6 +269,8 @@ def main():
     model_suhu, model_ph, model_do, scaler_suhu, scaler_ph, scaler_do = load_models()
     print("Model siap.")
 
+    last_processed_vals = None
+
     while True:
         try:
             client = get_influx_client()
@@ -288,6 +290,18 @@ def main():
                 continue
 
             val_suhu, val_ph, val_do = lookback
+            current_signature = (tuple(val_suhu), tuple(val_ph), tuple(val_do))
+
+            if current_signature == last_processed_vals:
+                print(
+                    f"[{datetime.now().isoformat(timespec='seconds')}] "
+                    "⏳ Data sensor statis (tidak ada perubahan). Melewati inferensi agar grafik dinamis & hemat resource..."
+                )
+                client.close()
+                time.sleep(INTERVAL_SEC)
+                continue
+
+            last_processed_vals = current_signature
 
             result = run_inference(
                 model_suhu, model_ph, model_do,
