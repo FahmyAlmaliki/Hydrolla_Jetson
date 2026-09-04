@@ -15,6 +15,11 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>(new Date().toISOString());
   const [chartRange, setChartRange] = useState<ChartRange>(DEFAULT_RANGE);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,7 +100,7 @@ export default function DashboardAutoRefresh({ initialData }: { initialData: Das
           </span>
 
           <span className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--color-surface-container-high)] text-[var(--color-on-surface-variant)]">
-            Update: {new Date(lastUpdated).toLocaleTimeString("id-ID")}
+            Update: {mounted ? new Date(lastUpdated).toLocaleTimeString("id-ID") : "--.--.--"}
           </span>
         </div>
       </div>

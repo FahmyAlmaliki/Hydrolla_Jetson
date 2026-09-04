@@ -38,7 +38,7 @@ export function getInfluxQueryApi(): QueryApi | null {
   if (!url || !token) return null;
 
   if (!_queryApi) {
-    const client = new InfluxDB({ url: normalizeInfluxUrl(url), token });
+    const client = new InfluxDB({ url: normalizeInfluxUrl(url), token, timeout: 60000 });
     _queryApi = client.getQueryApi(process.env.INFLUXDB_ORG ?? "hydrola");
   }
 

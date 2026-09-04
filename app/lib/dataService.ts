@@ -133,13 +133,14 @@ async function fetchSensorReadingsFromInflux(): Promise<SensorReading[]> {
  */
 async function fetchChartDataFromInflux(range: ChartRange): Promise<ChartPoint[]> {
   const config = getChartQueryConfig(range);
+  const aggregateFlux = config.window ? `|> aggregateWindow(every: ${config.window}, fn: mean, createEmpty: false)` : "";
   const flux = `
     from(bucket: "${INFLUX_BUCKET}")
       |> range(start: ${config.start})
       |> filter(fn: (r) => r._measurement == "water_quality")
       |> filter(fn: (r) => r._field == "ph" or r._field == "do" or
                            r._field == "temperature")
-      |> aggregateWindow(every: ${config.window}, fn: mean, createEmpty: false)
+      ${aggregateFlux}
       |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
       |> sort(columns: ["_time"])
   `;
@@ -269,13 +270,13 @@ export type ChartRange = "30m" | "1h" | "6h" | "24h" | "7d" | "30d";
 
 function getChartQueryConfig(range: ChartRange) {
   switch (range) {
-    case "30m": return { start: "-30m", window: "1m",  mockCount: 30 };
-    case "1h":  return { start: "-1h",  window: "2m",  mockCount: 30 };
-    case "6h":  return { start: "-6h",  window: "15m", mockCount: 25 };
-    case "7d":  return { start: "-7d",  window: "6h",  mockCount: 29 };
-    case "30d": return { start: "-30d", window: "1d",  mockCount: 31 };
+    case "30m": return { start: "-30m", window: null };
+    case "1h":  return { start: "-1h",  window: null };
+    case "6h":  return { start: "-6h",  window: null };
+    case "7d":  return { start: "-7d",  window: "2h" };
+    case "30d": return { start: "-30d", window: "12h" };
     case "24h":
-    default:    return { start: "-24h", window: "1h",  mockCount: 25 };
+    default:    return { start: "-24h", window: "15m" };
   }
 }
 

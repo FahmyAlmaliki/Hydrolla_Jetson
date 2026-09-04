@@ -48,7 +48,7 @@ export default function PredictionChart({ data }: { data: AIPredictionChartPoint
       </div>
 
       <div className="w-full h-64">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
             <XAxis
               dataKey="time"
